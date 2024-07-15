@@ -56,9 +56,9 @@ public class UserServiceImpl implements UserService{
         // Create an encoder with strength 16
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(16);
         String result = encoder.encode(newUser.getPassword());
-        assertTrue(encoder.matches(newUser.getPassword(),result),"authentication successful!!");
         newUser.setPassword(result);
         User savedUser =  userRepository.save(newUser);
+        assertTrue(encoder.matches(newUser.getPassword(),result),"authentication successful!!");
          EmailDetails emailDetails = EmailDetails.builder()
                  .recipient(newUser.getEmail())
                  .subject("ACCOUNT CREATION")
@@ -121,8 +121,12 @@ public class UserServiceImpl implements UserService{
                     .build();
         }
         User foundUser = userRepository.findByAccountNumber(creditDebitRequest.getAccountNumber());
-        if (foundUser.getAccount().getBalance().){
-
+       if (foundUser.getAccount().getBalance().intValue() < 500){
+            return BankResponse.builder()
+                    .responseMessage(AccountUtils.INSUFFICIENT_FUNDS_MESSAGE)
+                    .responseCode(AccountUtils.INSUFFICIENT_FUNDS_CODE)
+                    .accountInfo(null)
+                    .build();
         }
         Transaction transaction = Transaction.builder()
                 .time(LocalDateTime.now())
@@ -179,8 +183,12 @@ public class UserServiceImpl implements UserService{
                     .build();
         }
         User foundUser = userRepository.findByAccountNumber(creditDebitRequest.getAccountNumber());
-        if (foundUser.getAccount().getBalance().){
-
+        if (foundUser.getAccount().getBalance().intValue() < 500){
+            return BankResponse.builder()
+                    .responseMessage(AccountUtils.INSUFFICIENT_FUNDS_MESSAGE)
+                    .responseCode(AccountUtils.INSUFFICIENT_FUNDS_CODE)
+                    .accountInfo(null)
+                    .build();
         }
         Transaction transaction = Transaction.builder()
                 .time(LocalDateTime.now())
