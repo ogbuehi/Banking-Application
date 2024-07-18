@@ -22,4 +22,7 @@ public class Transaction {
     private BigDecimal amount;
     @Column(name = "transaction_time")
     private LocalDateTime time;
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "beneficiary_id")
+    private Beneficiary beneficiary;
 }

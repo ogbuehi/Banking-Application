@@ -1,10 +1,7 @@
 package com.learnjava.BankingApp.service;
 
 import com.learnjava.BankingApp.dto.*;
-import com.learnjava.BankingApp.model.Account;
-import com.learnjava.BankingApp.model.Operation;
-import com.learnjava.BankingApp.model.Transaction;
-import com.learnjava.BankingApp.model.User;
+import com.learnjava.BankingApp.model.*;
 import com.learnjava.BankingApp.repository.UserRepository;
 import com.learnjava.BankingApp.utils.AccountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,9 +53,9 @@ public class UserServiceImpl implements UserService{
         // Create an encoder with strength 16
         BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(16);
         String result = encoder.encode(newUser.getPassword());
-        assertTrue(encoder.matches(newUser.getPassword(),result),"authentication successful!!");
         newUser.setPassword(result);
         User savedUser =  userRepository.save(newUser);
+        assertTrue(encoder.matches(newUser.getPassword(),result),"authentication successful!!");
          EmailDetails emailDetails = EmailDetails.builder()
                  .recipient(newUser.getEmail())
                  .subject("ACCOUNT CREATION")
@@ -121,8 +118,12 @@ public class UserServiceImpl implements UserService{
                     .build();
         }
         User foundUser = userRepository.findByAccountNumber(creditDebitRequest.getAccountNumber());
-        if (foundUser.getAccount().getBalance().){
-
+       if (foundUser.getAccount().getBalance().intValue() < 500){
+            return BankResponse.builder()
+                    .responseMessage(AccountUtils.INSUFFICIENT_FUNDS_MESSAGE)
+                    .responseCode(AccountUtils.INSUFFICIENT_FUNDS_CODE)
+                    .accountInfo(null)
+                    .build();
         }
         Transaction transaction = Transaction.builder()
                 .time(LocalDateTime.now())
@@ -169,8 +170,8 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public BankResponse transfer(CreditDebitRequest creditDebitRequest) {
-        Boolean exists = userRepository.existsByAccountNumber(creditDebitRequest.getAccountNumber());
+    public BankResponse transfer(TransferRequest transferRequest) {
+        Boolean exists = userRepository.existsByAccountNumber(transferRequest.getAccountNumber());
         if (!exists){
             return BankResponse.builder()
                     .responseCode(AccountUtils.ACCOUNT_DOES_EXIST_CODE)
@@ -178,14 +179,23 @@ public class UserServiceImpl implements UserService{
                     .accountInfo(null)
                     .build();
         }
-        User foundUser = userRepository.findByAccountNumber(creditDebitRequest.getAccountNumber());
-        if (foundUser.getAccount().getBalance().){
-
+        User foundUser = userRepository.findByAccountNumber(transferRequest.getAccountNumber());
+        if (foundUser.getAccount().getBalance().intValue() < 500){
+            return BankResponse.builder()
+                    .responseMessage(AccountUtils.INSUFFICIENT_FUNDS_MESSAGE)
+                    .responseCode(AccountUtils.INSUFFICIENT_FUNDS_CODE)
+                    .accountInfo(null)
+                    .build();
         }
+         Beneficiary beneficiary = Beneficiary.builder()
+                .name(transferRequest.getBeneficiaryName())
+                .accountNumber(transferRequest.getBeneficiaryAccountNumber())
+                .bankDetails(transferRequest.getBeneficiaryBankDetails())
+                .build();
         Transaction transaction = Transaction.builder()
-                .time(LocalDateTime.now())
-                .amount(BigDecimal.valueOf(creditDebitRequest.getAmount()))
-                .operation(Operation.DEPOSIT)
+                .amount(BigDecimal.valueOf(transferRequest.getAmount()))
+                .operation(Operation.TRANSFER)
+                .beneficiary(beneficiary)
                 .build();
         BigDecimal current = transaction.getAmount().subtract(foundUser.getAccount().getBalance());
         foundUser.getAccount().setBalance(current);
@@ -200,7 +210,6 @@ public class UserServiceImpl implements UserService{
                         .accountBalance(foundUser.getAccount().getBalance())
                         .build())
                 .build();
-        return null;
     }
 
     @Override

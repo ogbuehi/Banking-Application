@@ -1,4 +1,4 @@
 package com.learnjava.BankingApp.model;
 
-public enum Operation {DEPOSIT,WITHDRAW
+public enum Operation {DEPOSIT,WITHDRAW,TRANSFER
 }

@@ -9,6 +9,6 @@ public interface UserService {
     BankResponse deposit(CreditDebitRequest creditDebitRequest);
     BankResponse withdraw(CreditDebitRequest creditDebitRequest);
     BankResponse getAccountBalance(AccountInfo accountInfo);
-    BankResponse transfer(CreditDebitRequest creditDebitRequest);
+    BankResponse transfer(TransferRequest transferRequest);
     TransactionResponse transactionHistory(CreditDebitRequest creditDebitRequest);
 }
