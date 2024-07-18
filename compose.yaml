@@ -1,0 +1,10 @@
+services:
+  mysql:
+    image: 'mysql:8.0.39'
+    environment:
+      - 'MYSQL_DATABASE=bank'
+      - 'MYSQL_PASSWORD=admin'
+      - 'MYSQL_ROOT_PASSWORD=admin'
+      - 'MYSQL_USER=devuser'
+    ports:
+      - '3306'

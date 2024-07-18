@@ -11,6 +11,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Transactional
@@ -33,10 +34,7 @@ public class Account {
     @Column(name = "last_modified_time")
     @UpdateTimestamp
     private LocalDateTime modifiedAt;
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToMany(targetEntity = Account.class)
     @JoinColumn(name = "fk_transaction_id")
-    private Transaction transaction;
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name = "beneficiary_id")
-    private Beneficiary beneficiary;
+    private List<Transaction> transactions;
 }

@@ -5,41 +5,34 @@ import com.learnjava.BankingApp.service.UserService;
 import com.learnjava.BankingApp.service.UserServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/account/user")
 public class UserController {
     @Autowired
     private UserService userService;
     @PostMapping("/signup")
-    @ResponseStatus(HttpStatus.CREATED)
-    public BankResponse signUp(@RequestBody UserDto userDto) {
+    public ResponseEntity<String> signUp(@RequestBody UserDto userDto) {
         return userService.createAccount(userDto);
     }
     @GetMapping("/balance")
-    @ResponseStatus(HttpStatus.FOUND)
-    public BankResponse getBalance(@RequestBody AccountInfo accountInfo){
-        return userService.getAccountBalance(accountInfo);
+    public ResponseEntity<BigDecimal> getBalance(@RequestBody BalanceRequest balanceRequest){
+        return userService.getAccountBalance(balanceRequest);
     }
     @PutMapping("/deposit")
-    @ResponseStatus(HttpStatus.ACCEPTED)
-    public BankResponse deposit(@RequestBody CreditDebitRequest creditDebitRequest){
+    public ResponseEntity<String> deposit(@RequestBody CreditDebitRequest creditDebitRequest){
         return userService.deposit(creditDebitRequest);
     }
     @PutMapping("/withdraw")
-    @ResponseStatus(HttpStatus.ACCEPTED)
-    public BankResponse withdraw(@RequestBody CreditDebitRequest creditDebitRequest){
+    public ResponseEntity<String> withdraw(@RequestBody CreditDebitRequest creditDebitRequest){
         return userService.withdraw(creditDebitRequest);
     }
     @PutMapping("/transfer")
-    @ResponseStatus(HttpStatus.ACCEPTED)
-    public BankResponse transfer(@RequestBody TransferRequest transferRequest){
+    public ResponseEntity<String> transfer(@RequestBody TransferRequest transferRequest){
         return userService.transfer(transferRequest);
-    }
-    @GetMapping("/history")
-    @ResponseStatus(HttpStatus.FOUND)
-    public TransactionResponse getTransactionHistory(@RequestBody CreditDebitRequest creditDebitRequest){
-        return userService.transactionHistory(creditDebitRequest);
     }
 }
