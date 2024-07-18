@@ -190,10 +190,15 @@ public class UserServiceImpl implements UserService{
                     .accountInfo(null)
                     .build();
         }
+         Beneficiary beneficiary = Beneficiary.builder()
+                .name(transferRequest.getBeneficiaryName())
+                .accountNumber(transferRequest.getBeneficiaryAccountNumber())
+                .bankDetails(transferRequest.getBeneficiaryBankDetails())
+                .build();
         Transaction transaction = Transaction.builder()
-                .time(LocalDateTime.now())
-                .amount(BigDecimal.valueOf(creditDebitRequest.getAmount()))
-                .operation(Operation.DEPOSIT)
+                .amount(BigDecimal.valueOf(transferRequest.getAmount()))
+                .operation(Operation.TRANSFER)
+                .beneficiary(beneficiary)
                 .build();
         BigDecimal current = transaction.getAmount().subtract(foundUser.getAccount().getBalance());
         foundUser.getAccount().setBalance(current);
