@@ -24,4 +24,24 @@ public class UserController {
     public BankResponse getBalance(@RequestBody AccountInfo accountInfo){
         return userService.getAccountBalance(accountInfo);
     }
+     @PutMapping("/deposit")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public BankResponse deposit(@RequestBody CreditDebitRequest creditDebitRequest){
+        return userService.deposit(creditDebitRequest);
+    }
+    @PutMapping("/withdraw")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public BankResponse withdraw(@RequestBody CreditDebitRequest creditDebitRequest){
+        return userService.withdraw(creditDebitRequest);
+    }
+    @PutMapping("/transfer")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public BankResponse transfer(@RequestBody TransferRequest transferRequest){
+        return userService.transfer(transferRequest);
+    }
+    @GetMapping("/history")
+    @ResponseStatus(HttpStatus.FOUND)
+    public TransactionResponse getTransactionHistory(@RequestBody CreditDebitRequest creditDebitRequest){
+        return userService.transactionHistory(creditDebitRequest);
+    }
 }
