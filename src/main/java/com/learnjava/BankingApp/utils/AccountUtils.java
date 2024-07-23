@@ -9,8 +9,8 @@ public class AccountUtils {
     public static final String ACCOUNT_CREATION_SUCCESS_MESSAGE = "Account Successfully Created!!";
     public static final String ACCOUNT_DOES_EXIST_CODE = "003";
     public static final String ACCOUNT_DOES_EXIST_MESSAGE = "Account does not exist";
-    public static final String INSUFFICIENT_FUNDS_MESSAGE = "";
-    public static final String INSUFFICIENT_FUNDS_CODE = "";
+    public static final String INSUFFICIENT_FUNDS_MESSAGE = "Insufficient funds for this transaction!!";
+    public static final String INSUFFICIENT_FUNDS_CODE = "004";
     public static String generateAccountNumber(){
         Year currentYear = Year.now();
         int min = 100000;
