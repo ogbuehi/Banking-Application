@@ -11,5 +11,4 @@ public interface UserService {
     ResponseEntity<String> withdraw(CreditDebitRequest creditDebitRequest);
     ResponseEntity<BigDecimal> getAccountBalance(BalanceRequest balanceRequest);
     ResponseEntity<String> transfer(TransferRequest transferRequest);
-//    HistoryResponse transactionHistory(HistoryRequest historyRequest);
 }
