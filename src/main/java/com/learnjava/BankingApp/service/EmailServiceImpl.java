@@ -1,6 +1,6 @@
 package com.learnjava.BankingApp.service;
 
-import com.learnjava.BankingApp.dto.EmailDetails;
+import com.learnjava.BankingApp.model.EmailDetails;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;

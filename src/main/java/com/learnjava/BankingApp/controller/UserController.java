@@ -1,38 +1,42 @@
 package com.learnjava.BankingApp.controller;
 
-import com.learnjava.BankingApp.dto.*;
+import com.learnjava.BankingApp.dto.LoginDto;
+import com.learnjava.BankingApp.dto.UserDto;
 import com.learnjava.BankingApp.service.UserService;
-import com.learnjava.BankingApp.service.UserServiceImpl;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
-
 @RestController
-@RequestMapping("/account/user")
+@RequestMapping("/api/user")
 public class UserController {
     @Autowired
     private UserService userService;
-    @PostMapping("/signup")
-    public ResponseEntity<String> signUp(@RequestBody UserDto userDto) {
+
+    @PostMapping("/register")
+    public ResponseEntity<String> signUp(@RequestBody @Valid UserDto userDto) {
         return userService.createAccount(userDto);
     }
-    @GetMapping("/balance")
-    public ResponseEntity<BigDecimal> getBalance(@RequestBody BalanceRequest balanceRequest){
-        return userService.getAccountBalance(balanceRequest);
+    @PostMapping("/login")
+    public ResponseEntity<String> login(@RequestBody LoginDto loginDto) {
+        return userService.verify(loginDto);
     }
-    @PutMapping("/deposit")
-    public ResponseEntity<String> deposit(@RequestBody CreditDebitRequest creditDebitRequest){
-        return userService.deposit(creditDebitRequest);
+    @GetMapping("/get-all")
+    public ResponseEntity<String> getAllUsers() {
+        return userService.getAllUsers();
     }
-    @PutMapping("/withdraw")
-    public ResponseEntity<String> withdraw(@RequestBody CreditDebitRequest creditDebitRequest){
-        return userService.withdraw(creditDebitRequest);
+    @GetMapping("/{id}")
+    public ResponseEntity<String> getUser(@PathVariable Long id) {
+        return userService.getUser(id);
     }
-    @PutMapping("/transfer")
-    public ResponseEntity<String> transfer(@RequestBody TransferRequest transferRequest){
-        return userService.transfer(transferRequest);
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteUser(@PathVariable Long id) {
+        return userService.deleteUser(id);
     }
+    @DeleteMapping("/delete-all")
+    public ResponseEntity<String> deleteAllUsers() {
+        return userService.deleteAllUsers();
+    }
+
 }

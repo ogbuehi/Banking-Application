@@ -7,9 +7,10 @@ import java.math.BigDecimal;
 
 public interface UserService {
     ResponseEntity<String> createAccount(UserDto userDto);
-    ResponseEntity<String> deposit(CreditDebitRequest creditDebitRequest);
-    ResponseEntity<String> withdraw(CreditDebitRequest creditDebitRequest);
-    ResponseEntity<BigDecimal> getAccountBalance(BalanceRequest balanceRequest);
-    ResponseEntity<String> transfer(TransferRequest transferRequest);
-//    HistoryResponse transactionHistory(HistoryRequest historyRequest);
+    ResponseEntity<String> verify(LoginDto userDto);
+    ResponseEntity<String> getAllUsers();
+    ResponseEntity<String> getUser(Long id);
+    ResponseEntity<String> deleteUser(Long id);
+    ResponseEntity<String> deleteAllUsers();
+
 }

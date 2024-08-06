@@ -2,10 +2,7 @@ package com.learnjava.BankingApp.model;
 
 import jakarta.persistence.*;
 import jakarta.transaction.Transactional;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -17,8 +14,9 @@ import java.util.List;
 @Transactional
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-@Data
+@Getter
+@Setter
+@Table(name = "account")
 public class Account {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,7 +32,6 @@ public class Account {
     @Column(name = "last_modified_time")
     @UpdateTimestamp
     private LocalDateTime modifiedAt;
-    @OneToMany(targetEntity = Account.class)
-    @JoinColumn(name = "fk_transaction_id")
+    @OneToMany(mappedBy = "account")
     private List<Transaction> transactions;
 }

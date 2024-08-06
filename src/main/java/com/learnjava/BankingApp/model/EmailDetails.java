@@ -1,4 +1,4 @@
-package com.learnjava.BankingApp.dto;
+package com.learnjava.BankingApp.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

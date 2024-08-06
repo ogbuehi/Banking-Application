@@ -1,20 +1,16 @@
 package com.learnjava.BankingApp.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import jakarta.transaction.Transactional;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Transactional
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
-@Builder
+@Getter
+@Setter
+@Table(name = "beneficiary")
 public class Beneficiary {
     @Id
     @Column(name = "beneficiary_id")
@@ -24,4 +20,7 @@ public class Beneficiary {
     private String accountNumber;
     @Column(name = "bank_details")
     private String bankDetails;
+    @OneToOne(mappedBy = "beneficiary",
+    cascade = CascadeType.ALL)
+    private Transaction transaction;
 }

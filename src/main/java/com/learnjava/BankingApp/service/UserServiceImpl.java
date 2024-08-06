@@ -1,23 +1,23 @@
 package com.learnjava.BankingApp.service;
 
-import com.learnjava.BankingApp.dto.*;
+import com.learnjava.BankingApp.dto.LoginDto;
+import com.learnjava.BankingApp.dto.UserDto;
 import com.learnjava.BankingApp.error.BankAccountException;
-import com.learnjava.BankingApp.model.*;
+import com.learnjava.BankingApp.model.Account;
+import com.learnjava.BankingApp.model.EmailDetails;
+import com.learnjava.BankingApp.model.User;
 import com.learnjava.BankingApp.repository.UserRepository;
 import com.learnjava.BankingApp.utils.AccountUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-
-import static org.hibernate.validator.internal.util.Contracts.assertTrue;
-import static org.hibernate.validator.internal.util.Contracts.assertValueNotNull;
 
 @Service
 public class UserServiceImpl implements UserService{
@@ -25,6 +25,12 @@ public class UserServiceImpl implements UserService{
     private UserRepository userRepository;
     @Autowired
     private EmailService emailService;
+    @Autowired
+    private BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
+    @Autowired
+    private AuthenticationManager authenticationManager;
+    @Autowired
+    private JWTService jwtService;
 
     @Override
     public ResponseEntity<String> createAccount(UserDto userDto) {
@@ -41,24 +47,20 @@ public class UserServiceImpl implements UserService{
             Account account = new Account();
             account.setAccountNumber(AccountUtils.generateAccountNumber());
             account.setBalance(BigDecimal.ZERO);
-            User newUser = User.builder()
-                    .firstName(userDto.getFirstName())
-                    .lastName(userDto.getLastName())
-                    .otherName(userDto.getOtherName())
-                    .userName(userDto.getUserName())
-                    .gender(userDto.getGender())
-                    .password(userDto.getPassword())
-                    .stateOfOrigin(userDto.getStateOfOrigin())
-                    .email(userDto.getEmail())
-                    .address(userDto.getAddress())
-                    .contact(userDto.getContact())
-                    .account(account)
-                    .build();
-            // Create an encoder with strength 16
-            BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(16);
-            String result = encoder.encode(newUser.getPassword());
-            assert (encoder.matches(newUser.getPassword(), result));
-            newUser.setPassword(result);
+
+            User newUser = new User();
+            newUser.setFirstName(userDto.getFirstName());
+            newUser.setLastName(userDto.getLastName());
+            newUser.setOtherName(userDto.getOtherName());
+            newUser.setUserName(userDto.getUserName());
+            newUser.setPassword(encoder.encode(userDto.getPassword()));
+            newUser.setGender(userDto.getGender());
+            newUser.setStateOfOrigin(userDto.getStateOfOrigin());
+            newUser.setEmail(userDto.getEmail());
+            newUser.setAddress(userDto.getAddress());
+            newUser.setContact(userDto.getContact());
+            newUser.setAccount(account);
+
             User savedUser = userRepository.save(newUser);
             EmailDetails emailDetails = EmailDetails.builder()
                     .recipient(newUser.getEmail())
@@ -71,112 +73,59 @@ public class UserServiceImpl implements UserService{
             emailService.sendEmail(emailDetails);
             return new ResponseEntity<>("success",HttpStatus.CREATED);
         }catch (BankAccountException e){
-            e.accountException("ERROR OCCURRED DURING ACCOUNT CREATION");
+            throw new BankAccountException("ERROR OCCURRED DURING ACCOUNT CREATION",e);
         }
-         return new ResponseEntity<>("failed", HttpStatus.BAD_REQUEST);
+    }
+    @Override
+    public ResponseEntity<String> verify(LoginDto loginDto) {
+        try {
+            Authentication auth =
+                    authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginDto.getUserName(), loginDto.getPassword()));
+            if (auth.isAuthenticated()) {
+                return new ResponseEntity<>(jwtService.generateToken(loginDto.getUserName()), HttpStatus.ACCEPTED);
+            }
+            return new ResponseEntity<>("Failed", HttpStatus.NOT_ACCEPTABLE);
+        }catch (BankAccountException e){
+            throw new BankAccountException("ERROR OCCURRED DURING USER VERIFICATION", e);
+        }
+    }
+    @Override
+    public ResponseEntity<String> getAllUsers() {
+        try {
+            userRepository.findAll();
+            return new ResponseEntity<>("success",HttpStatus.FOUND);
+        }catch (BankAccountException e){
+            throw new BankAccountException("ERROR OCCURRED WHILE GETTING ALL USERS",e);
+        }
     }
 
     @Override
-    public ResponseEntity<String> deposit(CreditDebitRequest creditDebitRequest) {
+    public ResponseEntity<String> getUser(Long id) {
         try {
-
-            Boolean exists = userRepository.existsByAccountNumber(creditDebitRequest.getAccountNumber());
-            if (!exists) {
-                return new ResponseEntity<>(AccountUtils.ACCOUNT_DOES_EXIST_MESSAGE, HttpStatus.BAD_REQUEST);
-            }
-            User foundUser = userRepository.findByAccountNumber(creditDebitRequest.getAccountNumber());
-            Transaction transaction = Transaction.builder()
-                    .time(LocalDateTime.now())
-                    .amount(BigDecimal.valueOf(creditDebitRequest.getAmount()))
-                    .operation(Operation.DEPOSIT)
-                    .build();
-            BigDecimal current = transaction.getAmount().add(foundUser.getAccount().getBalance());
-            foundUser.getAccount().setBalance(current);
-            userRepository.save(foundUser);
-            return new ResponseEntity<>("DEPOSIT SUCCESSFUL!!", HttpStatus.OK);
+            userRepository.findById(id);
+            return new ResponseEntity<>("success",HttpStatus.FOUND);
         }catch (BankAccountException e){
-            e.accountException("ERROR OCCURRED DURING DEPOSIT");
+            throw new BankAccountException("ERROR OCCURRED WHILE GETTING A USER",e);
         }
-        return new ResponseEntity<>("DEPOSIT FAILED", HttpStatus.BAD_REQUEST);
     }
 
     @Override
-    public ResponseEntity<String> withdraw(CreditDebitRequest creditDebitRequest) {
+    public ResponseEntity<String> deleteUser(Long id) {
         try {
-            Boolean exists = userRepository.existsByAccountNumber(creditDebitRequest.getAccountNumber());
-            if (!exists) {
-                return new ResponseEntity<>(AccountUtils.ACCOUNT_DOES_EXIST_MESSAGE, HttpStatus.BAD_REQUEST);
-            }
-            User foundUser = userRepository.findByAccountNumber(creditDebitRequest.getAccountNumber());
-            // Check if user account balance is less than #500.
-            // If it is, the user is not eligible to withdraw.
-            // Return insufficient funds message.
-            if (foundUser.getAccount().getBalance().doubleValue() < 500.0) {
-                return new ResponseEntity<>(AccountUtils.INSUFFICIENT_FUNDS_MESSAGE, HttpStatus.NOT_ACCEPTABLE);
-            }
-            Transaction transaction = Transaction.builder()
-                    .time(LocalDateTime.now())
-                    .amount(BigDecimal.valueOf(creditDebitRequest.getAmount()))
-                    .operation(Operation.DEPOSIT)
-                    .build();
-            BigDecimal current = transaction.getAmount().subtract(foundUser.getAccount().getBalance());
-            foundUser.getAccount().setBalance(current);
-            userRepository.save(foundUser);
-            return new ResponseEntity<>("WITHDRAWAL SUCCESSFUL", HttpStatus.OK);
+            userRepository.deleteById(id);
+            return new ResponseEntity<>("deleted",HttpStatus.OK);
         }catch (BankAccountException e){
-            e.accountException("ERROR OCCURRED DURING WITHDRAWAL");
+            throw new BankAccountException("ERROR OCCURRED WHILE DELETING A USER",e);
         }
-        return new ResponseEntity<>("WITHDRAWAL FAILED", HttpStatus.BAD_REQUEST);
     }
 
     @Override
-    public ResponseEntity<BigDecimal> getAccountBalance(BalanceRequest balanceRequest) {
-
+    public ResponseEntity<String> deleteAllUsers() {
         try {
-            Boolean exists = userRepository.existsByAccountNumber(balanceRequest.getAccountNumber());
-            if (!exists) {
-                return new ResponseEntity<>(BigDecimal.valueOf(-1), HttpStatus.BAD_REQUEST);
-            }
-            User foundUser = userRepository.findByAccountNumber(balanceRequest.getAccountNumber());
-            BigDecimal balance = foundUser.getAccount().getBalance();
-            return new ResponseEntity<>(balance, HttpStatus.FOUND);
+            userRepository.deleteAll();
+            return new ResponseEntity<>("deleted",HttpStatus.OK);
         }catch (BankAccountException e){
-            e.accountException("ERROR OCCURRED WHILE GETTING ACCOUNT BALANCE");
+            throw new BankAccountException("ERROR OCCURRED WHILE DELETING ALL USERS",e);
         }
-       return new ResponseEntity<>(BigDecimal.valueOf(-1), HttpStatus.NOT_ACCEPTABLE);
-    }
-
-    @Override
-    public ResponseEntity<String> transfer(TransferRequest transferRequest) {
-        try {
-            Boolean exists = userRepository.existsByAccountNumber(transferRequest.getAccountNumber());
-            if (!exists) {
-                return new ResponseEntity<>(AccountUtils.ACCOUNT_DOES_EXIST_MESSAGE, HttpStatus.BAD_REQUEST);
-            }
-            User foundUser = userRepository.findByAccountNumber(transferRequest.getAccountNumber());
-            // Check if user account balance is less than #500.
-            // If it is, the user is not eligible to transfer.
-            // Return insufficient funds message.
-            if (foundUser.getAccount().getBalance().doubleValue() < 500.0) {
-                return new ResponseEntity<>(AccountUtils.INSUFFICIENT_FUNDS_MESSAGE, HttpStatus.NOT_ACCEPTABLE);
-            }
-            Beneficiary beneficiary = Beneficiary.builder()
-                    .name(transferRequest.getBeneficiaryName())
-                    .accountNumber(transferRequest.getBeneficiaryAccountNumber())
-                    .bankDetails(transferRequest.getBeneficiaryBankDetails())
-                    .build();
-            Transaction transaction = Transaction.builder()
-                    .amount(BigDecimal.valueOf(transferRequest.getAmount()))
-                    .operation(Operation.TRANSFER)
-                    .beneficiary(beneficiary)
-                    .build();
-            BigDecimal current = transaction.getAmount().subtract(foundUser.getAccount().getBalance());
-            foundUser.getAccount().setBalance(current);
-            userRepository.save(foundUser);
-            return new ResponseEntity<>("TRANSFER SUCCESSFUL", HttpStatus.OK);
-        }catch (BankAccountException e){
-            e.accountException("ERROR OCCURRED DURING TRANSFER");
-        }
-        return new ResponseEntity<>("TRANSFER FAILED", HttpStatus.BAD_REQUEST);
     }
 }
