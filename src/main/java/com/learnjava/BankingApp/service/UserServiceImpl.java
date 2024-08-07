@@ -28,7 +28,6 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public ResponseEntity<String> createAccount(UserDto userDto) {
-        try {
 
         /*
         Check if user already exists.If not create an account
@@ -36,8 +35,9 @@ public class UserServiceImpl implements UserService{
             if (userRepository.existsByEmail(userDto.getEmail())) {
                 return new ResponseEntity<>(
                         AccountUtils.ACCOUNT_EXISTS_RESPONSE_MESSAGE, HttpStatus.BAD_REQUEST);
-
             }
+        
+        try{
             Account account = new Account();
             account.setAccountNumber(AccountUtils.generateAccountNumber());
             account.setBalance(BigDecimal.ZERO);
@@ -78,12 +78,13 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public ResponseEntity<String> deposit(CreditDebitRequest creditDebitRequest) {
-        try {
-
+        
             Boolean exists = userRepository.existsByAccountNumber(creditDebitRequest.getAccountNumber());
             if (!exists) {
                 return new ResponseEntity<>(AccountUtils.ACCOUNT_DOES_EXIST_MESSAGE, HttpStatus.BAD_REQUEST);
             }
+        
+        try {
             User foundUser = userRepository.findByAccountNumber(creditDebitRequest.getAccountNumber());
             Transaction transaction = Transaction.builder()
                     .time(LocalDateTime.now())
@@ -102,7 +103,7 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public ResponseEntity<String> withdraw(CreditDebitRequest creditDebitRequest) {
-        try {
+        
             Boolean exists = userRepository.existsByAccountNumber(creditDebitRequest.getAccountNumber());
             if (!exists) {
                 return new ResponseEntity<>(AccountUtils.ACCOUNT_DOES_EXIST_MESSAGE, HttpStatus.BAD_REQUEST);
@@ -114,6 +115,7 @@ public class UserServiceImpl implements UserService{
             if (foundUser.getAccount().getBalance().doubleValue() < 500.0) {
                 return new ResponseEntity<>(AccountUtils.INSUFFICIENT_FUNDS_MESSAGE, HttpStatus.NOT_ACCEPTABLE);
             }
+        try {
             Transaction transaction = Transaction.builder()
                     .time(LocalDateTime.now())
                     .amount(BigDecimal.valueOf(creditDebitRequest.getAmount()))
@@ -122,7 +124,7 @@ public class UserServiceImpl implements UserService{
             BigDecimal current = transaction.getAmount().subtract(foundUser.getAccount().getBalance());
             foundUser.getAccount().setBalance(current);
             userRepository.save(foundUser);
-            return new ResponseEntity<>("WITHDRAWAL SUCCESSFUL", HttpStatus.OK);
+            return new ResponseEntity<>("WITHDRAWAL SUCCESSFUL!!", HttpStatus.OK);
         }catch (BankAccountException e){
             e.accountException("ERROR OCCURRED DURING WITHDRAWAL");
         }
@@ -132,11 +134,11 @@ public class UserServiceImpl implements UserService{
     @Override
     public ResponseEntity<BigDecimal> getAccountBalance(BalanceRequest balanceRequest) {
 
-        try {
             Boolean exists = userRepository.existsByAccountNumber(balanceRequest.getAccountNumber());
             if (!exists) {
                 return new ResponseEntity<>(BigDecimal.valueOf(-1), HttpStatus.BAD_REQUEST);
             }
+        try {
             User foundUser = userRepository.findByAccountNumber(balanceRequest.getAccountNumber());
             BigDecimal balance = foundUser.getAccount().getBalance();
             return new ResponseEntity<>(balance, HttpStatus.FOUND);
@@ -148,7 +150,7 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public ResponseEntity<String> transfer(TransferRequest transferRequest) {
-        try {
+        
             Boolean exists = userRepository.existsByAccountNumber(transferRequest.getAccountNumber());
             if (!exists) {
                 return new ResponseEntity<>(AccountUtils.ACCOUNT_DOES_EXIST_MESSAGE, HttpStatus.BAD_REQUEST);
@@ -157,6 +159,7 @@ public class UserServiceImpl implements UserService{
             // Check if user account balance is less than #500.
             // If it is, the user is not eligible to transfer.
             // Return insufficient funds message.
+        try {
             if (foundUser.getAccount().getBalance().doubleValue() < 500.0) {
                 return new ResponseEntity<>(AccountUtils.INSUFFICIENT_FUNDS_MESSAGE, HttpStatus.NOT_ACCEPTABLE);
             }
@@ -173,7 +176,7 @@ public class UserServiceImpl implements UserService{
             BigDecimal current = transaction.getAmount().subtract(foundUser.getAccount().getBalance());
             foundUser.getAccount().setBalance(current);
             userRepository.save(foundUser);
-            return new ResponseEntity<>("TRANSFER SUCCESSFUL", HttpStatus.OK);
+            return new ResponseEntity<>("TRANSFER SUCCESSFUL!!", HttpStatus.OK);
         }catch (BankAccountException e){
             e.accountException("ERROR OCCURRED DURING TRANSFER");
         }
